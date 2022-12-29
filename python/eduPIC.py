@@ -237,6 +237,7 @@ def set_ion_cross_sections_ar():
 
     print("Setting ion cross-sections.\n")
     #TODO: the loop below is slowing things down, needs speedup
+
     for i in range(CS_RANGES):
         if (i==0):
             e_com = DE_CS
@@ -488,21 +489,21 @@ def solve_poisson(rho1, tt):
     
     # apply potential to the electrodes - boundary conditions
     
-    pot[0]     = VOLTAGE * np.cos(OMEGA * tt) # potential at the powered electrode
-    pot[N_G-1] = 0.0        # potential at the grounded electrode
+    pot.vals[0]     = VOLTAGE * np.cos(OMEGA * tt) # potential at the powered electrode
+    pot.vals[N_G-1] = 0.0        # potential at the grounded electrode
     
     # solve Poisson equation
     
     f.vals[1:N_G-1] = ALPHA*rho1.vals[1:N_G-1]
-    f.vals[1] -= pot[0]
-    f.vals[N_G-2] -= pot[N_G-1]
+    f.vals[1] -= pot.vals[0]
+    f.vals[N_G-2] -= pot.vals[N_G-1]
     w.vals[1] = C/B
     g.vals[1] = f.vals[1]/B
     w.vals[2:N_G-1] =C / (B - A * w.vals[1:N_G-2]) 
-    g.vals[2:N_G-1] = (f.vals[2:N_G-1] - A * g.vals[1:N_G-2]) / (B - A * w.vals[1-N_G-2])
-    pot[N_G-2] = g.vals[N_G-2]
+    g.vals[2:N_G-1] = (f.vals[2:N_G-1] - A * g.vals[1:N_G-2]) / (B - A * w.vals[1:N_G-2])
+    pot.vals[N_G-2] = g.vals[N_G-2]
     for i in range(N_G-3,0,-1):
-        pot[i] = g.vals[i] - w.vals[i] * pot[i+1]# potential at the grid points between the electrodes
+        pot.vals[i] = g.vals[i] - w.vals[i] * pot[i+1]# potential at the grid points between the electrodes
     
     # compute electric field
     
@@ -543,7 +544,7 @@ def do_one_cycle(Time):
         
 
         for k in range(N_e):
-            c0 = x_e[k] * INV_DX
+            c0 = x_e.vals[k] * INV_DX
             p  = int(c0)
             e_density.vals[p]   += (p + 1 - c0) * FACTOR_W
             e_density.vals[p+1] += (c0 - p) * FACTOR_W
