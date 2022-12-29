@@ -202,29 +202,47 @@ rng = default_rng()
 def set_electron_cross_sections_ar():
     print("Setting electron cross-sections.\n")
     #TODO: the loop below is slowing things down, needs speedup
-    for i in range(CS_RANGES):
-        if (i==0):
-            en = DE_CS
-        else:
-            en = DE_CS*i
-        qmel = np.abs(6.0 / np.power(1.0 + (en/0.1) + np.power(en/0.6,2.0), 3.3)
-                    - 1.1 * np.power(en, 1.4) / (1.0 + np.power(en/15.0, 1.2))/
-                    np.sqrt(1.0 + np.power(en/5.5, 2.5) + np.power(en/60.0, 4.1)))
-        + 0.05 / np.power(1.0 + en/10.0, 2.0) + 0.01 * np.power(en, 3.0) / (1.0 +
-        np.power(en/12.0, 6.0))
-        if (en > E_EXC_TH):
-            qexc = 0.034 * np.power(en-11.5, 1.1) * (1.0 + 
-            np.power(en/15.0, 28)) / (1.0 + np.power(en/23.0, 5.5))
-            + 0.023 * (en-11.5) / np.power(1.0 + en/80.0, 1.9)
-        else:
-            qexc = 0
-        if (en > E_ION_TH):
-            qion = 970.0 * (en-15.8) / np.power(70.0 + en, 2.0) + 0.06 * np.power(en-15.8, 2.0) * np.exp(-en/9)
-        else:
-            qion = 0
-        sigma[E_ELA].vals[i] = qmel * 1.0e-20;       # cross section for e- / Ar elastic collision
-        sigma[E_EXC].vals[i] = qexc * 1.0e-20;       # cross section for e- / Ar excitation
-        sigma[E_ION].vals[i] = qion * 1.0e-20;       # cross section for e- / Ar ionization
+    en = DE_CS*np.arange(CS_RANGES)
+    en[0] = DE_CS
+    qmel = np.abs(6.0 / np.power(1.0 + (en/0.1) + np.power(en/0.6,2.0), 3.3)
+                - 1.1 * np.power(en, 1.4) / (1.0 + np.power(en/15.0, 1.2))/
+                np.sqrt(1.0 + np.power(en/5.5, 2.5) + np.power(en/60.0, 4.1)))
+    + 0.05 / np.power(1.0 + en/10.0, 2.0) + 0.01 * np.power(en, 3.0) / (1.0 +
+    np.power(en/12.0, 6.0))
+    sigma[E_ELA].vals[:] = qmel*1e-20
+
+    expr1 = 0.034 * np.power(en-11.5, 1.1) * (1.0 + 
+    np.power(en/15.0, 28)) / (1.0 + np.power(en/23.0, 5.5))
+    + 0.023 * (en-11.5) / np.power(1.0 + en/80.0, 1.9)
+    qexc = (en > E_EXC_TH)*expr1
+    sigma[E_EXC].vals[:] = qexc * 1.0e-20       # cross section for e- / Ar excitation
+
+    expr2 = 970.0 * (en-15.8) / np.power(70.0 + en, 2.0) + 0.06 * np.power(en-15.8, 2.0) * np.exp(-en/9)
+    qion = (en > E_ION_TH)*expr2
+    sigma[E_ION].vals[:] = qion * 1.0e-20       # cross section for e- / Ar ionization
+    #for i in range(CS_RANGES):
+    #    if (i==0):
+    #        en = DE_CS
+    #    else:
+    #        en = DE_CS*i
+    #    qmel = np.abs(6.0 / np.power(1.0 + (en/0.1) + np.power(en/0.6,2.0), 3.3)
+    #                - 1.1 * np.power(en, 1.4) / (1.0 + np.power(en/15.0, 1.2))/
+    #                np.sqrt(1.0 + np.power(en/5.5, 2.5) + np.power(en/60.0, 4.1)))
+    #    + 0.05 / np.power(1.0 + en/10.0, 2.0) + 0.01 * np.power(en, 3.0) / (1.0 +
+    #    np.power(en/12.0, 6.0))
+    #    if (en > E_EXC_TH):
+    #        qexc = 0.034 * np.power(en-11.5, 1.1) * (1.0 + 
+    #        np.power(en/15.0, 28)) / (1.0 + np.power(en/23.0, 5.5))
+    #        + 0.023 * (en-11.5) / np.power(1.0 + en/80.0, 1.9)
+    #    else:
+    #        qexc = 0
+    #    if (en > E_ION_TH):
+    #        qion = 970.0 * (en-15.8) / np.power(70.0 + en, 2.0) + 0.06 * np.power(en-15.8, 2.0) * np.exp(-en/9)
+    #    else:
+    #        qion = 0
+    #    sigma[E_ELA].vals[i] = qmel * 1.0e-20;       # cross section for e- / Ar elastic collision
+    #    sigma[E_EXC].vals[i] = qexc * 1.0e-20;       # cross section for e- / Ar excitation
+    #    sigma[E_ION].vals[i] = qion * 1.0e-20;       # cross section for e- / Ar ionization
     print("Finished reading electron cross-sections of Ar.")
     return True
 
@@ -237,18 +255,28 @@ def set_ion_cross_sections_ar():
 
     print("Setting ion cross-sections.\n")
     #TODO: the loop below is slowing things down, needs speedup
+    #TODO: set e_com here
 
-    for i in range(CS_RANGES):
-        if (i==0):
-            e_com = DE_CS
-        else:
-            e_com = DE_CS*i
-        e_lab = 2.0 * e_com    # ion energy in the laboratory frame of reference
-        qmom  = 1.15e-18 * np.power(e_lab,-0.1) * np.power(1.0 + 0.015 / e_lab, 0.6)
-        qiso  = 2e-19 * np.power(e_lab,-0.5) / (1.0 + e_lab) + 3e-19 * e_lab / np.power(1.0 + e_lab / 3.0, 2.0)
-        qback = (qmom-qiso) / 2.0
-        sigma[I_ISO].vals[i]  = qiso # cross section for Ar+ / Ar isotropic part of elastic scattering
-        sigma[I_BACK].vals[i] = qback # cross section for Ar+ / Ar backward elastic scattering
+
+    e_com = DE_CS*np.arange(CS_RANGES)
+    e_com[0]= DE_CS
+    e_lab = 2.0*e_com
+    qmom  = 1.15e-18 * np.power(e_lab,-0.1) * np.power(1.0 + 0.015 / e_lab, 0.6)
+    qiso  = 2e-19 * np.power(e_lab,-0.5) / (1.0 + e_lab) + 3e-19 * e_lab / np.power(1.0 + e_lab / 3.0, 2.0)
+    qback = (qmom-qiso) / 2.0
+    sigma[I_ISO].vals[:]  = qiso # cross section for Ar+ / Ar isotropic part of elastic scattering
+    sigma[I_BACK].vals[:] = qback # cross section for Ar+ / Ar backward elastic scattering
+
+
+    #for i in range(CS_RANGES):
+    #    if (i==0):
+    #        e_com = DE_CS
+    #    else:
+    #        e_com = DE_CS*i
+    #    e_lab = 2.0 * e_com    # ion energy in the laboratory frame of reference
+    #    qmom  = 1.15e-18 * np.power(e_lab,-0.1) * np.power(1.0 + 0.015 / e_lab, 0.6)
+    #    qiso  = 2e-19 * np.power(e_lab,-0.5) / (1.0 + e_lab) + 3e-19 * e_lab / np.power(1.0 + e_lab / 3.0, 2.0)
+    #    qback = (qmom-qiso) / 2.0
     print("Finished reading ion cross-sections of Ar.")
     return True
 #----------------------------------------------------------------------//
@@ -286,24 +314,34 @@ def test_cross_sections():
 # find upper limit of collision frequencies                           //
 #---------------------------------------------------------------------//
 
-#TODO: Can the below functions be vectorized?
 def max_electron_coll_freq():
-    for i in range(CS_RANGES):
-        e = i*DE_CS
-        v  = np.sqrt(2.0 * e * EV_TO_J / E_MASS)
-        nu = v * sigma_tot_e[i]
-        if (nu > nu_max):
-            nu_max = nu
-    return nu_max
+    e = DE_CS*np.arange(CS_RANGES)
+    v  = np.sqrt(2.0 * e * EV_TO_J / E_MASS)
+    nu = v * sigma_tot_e.vals[:]
+    return nu.max()
+
+
+    #for i in range(CS_RANGES):
+    #    e = i*DE_CS
+    #    v  = np.sqrt(2.0 * e * EV_TO_J / E_MASS)
+    #    nu = v * sigma_tot_e[i]
+    #    if (nu > nu_max):
+    #        nu_max = nu
+    #return nu_max
 
 def max_ion_coll_freq():
-    for i in range(CS_RANGES):
-        e  = i * DE_CS
-        g  = np.sqrt(2.0 * e * EV_TO_J / MU_ARAR)
-        nu = g * sigma_tot_i[i]
-        if (nu > nu_max):
-            nu_max = nu
-    return nu_max
+    e = DE_CS*np.arange(CS_RANGES)
+    g  = np.sqrt(2.0 * e * EV_TO_J / MU_ARAR)
+    nu = g * sigma_tot_i.vals[:]
+    return nu.max()
+    
+    #for i in range(CS_RANGES):
+    #    e  = i * DE_CS
+    #    g  = np.sqrt(2.0 * e * EV_TO_J / MU_ARAR)
+    #    nu = g * sigma_tot_i[i]
+    #    if (nu > nu_max):
+    #        nu_max = nu
+    #return nu_max
     
 #----------------------------------------------------------------------//
 # initialization of the simulation by placing a given number of        //
@@ -311,19 +349,31 @@ def max_ion_coll_freq():
 #----------------------------------------------------------------------//
 
 def init(nseed):
-    global N_e, N_i
-    for i in range(nseed):
-        x_e.vals[i]  = L * rng.uniform(0,1)               # initial random position of the electron
-        vx_e.vals[i] = 0
-        vy_e.vals[i] = 0
-        vz_e.vals[i] = 0  # initial velocity components of the electron
-        x_i.vals[i]  = L * rng.uniform(0,1) # initial random position of the ion
-        vx_i.vals[i] = 0
-        vy_i.vals[i] = 0
-        vz_i.vals[i] = 0  # initial velocity components of the ion
+    global N_e, N_i, L
+    global x_e, vx_e, vy_e, vz_e, x_i, vx_i, vy_i, vz_i
+
+    #TODO: Musnt' the ion and electron locations be the same?
+    x_e.vals[:nseed] = L*rng.uniform(0,1, nseed)
+    vx_e.vals[:] = 0
+    vy_e.vals[:] = 0
+    vz_e.vals[:] = 0
+    x_i.vals[:nseed] = L*rng.uniform(0,1,nseed)
+    vx_i.vals[:] = 0
+    vy_i.vals[:] = 0
+    vz_i.vals[:] = 0
+    #for i in range(nseed):
+    #    x_e.vals[i]  = L * rng.uniform(0,1)               # initial random position of the electron
+    #    vx_e.vals[i] = 0
+    #    vy_e.vals[i] = 0
+    #    vz_e.vals[i] = 0  # initial velocity components of the electron
+    #    x_i.vals[i]  = L * rng.uniform(0,1) # initial random position of the ion
+    #    vx_i.vals[i] = 0
+    #    vy_i.vals[i] = 0
+    #    vz_i.vals[i] = 0  # initial velocity components of the ion
     N_e = nseed    # initial number of electrons
     N_i = nseed    # initial number of ions
     print("Initialised electrons and ions randomly")
+    print(x_e)
     return True
 
 #----------------------------------------------------------------------//
@@ -503,7 +553,7 @@ def solve_poisson(rho1, tt):
     g.vals[2:N_G-1] = (f.vals[2:N_G-1] - A * g.vals[1:N_G-2]) / (B - A * w.vals[1:N_G-2])
     pot.vals[N_G-2] = g.vals[N_G-2]
     for i in range(N_G-3,0,-1):
-        pot.vals[i] = g.vals[i] - w.vals[i] * pot[i+1]# potential at the grid points between the electrodes
+        pot.vals[i] = g.vals[i] - w.vals[i] * pot.vals[i+1]# potential at the grid points between the electrodes
     
     # compute electric field
     
@@ -619,6 +669,7 @@ def do_one_cycle(Time):
             for k in range(N_i):
                 c0  = x_i.vals[k] * INV_DX
                 p   = int(c0)
+                print(p)
                 c1  = p + 1 - c0
                 c2  = c0 - p
                 e_x = c1 * efield.vals[p] + c2 * efield.vals[p+1]
