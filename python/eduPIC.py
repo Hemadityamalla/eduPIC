@@ -29,6 +29,8 @@ import numpy as np
 from numpy.random import default_rng
 from dataclasses import dataclass
 import argparse
+#For debugging only
+import matplotlib.pyplot as plt
 
 # constants
 
@@ -44,7 +46,7 @@ EPSILON0       = 8.85418781e-12          # permittivity of free space [F/m]
 
 # simulation parameters
 
-N_G            = 400                   # number of grid points
+N_G            = 40                   # number of grid points
 N_T            = 4000                  # time steps within an RF period
 FREQUENCY      = 13.56e6               # driving frequency [Hz]
 VOLTAGE        = 250.0                 # voltage amplitude [V]
@@ -350,17 +352,18 @@ def max_ion_coll_freq():
 
 def init(nseed):
     global N_e, N_i, L
-    global x_e, vx_e, vy_e, vz_e, x_i, vx_i, vy_i, vz_i
+    global x_e, vx_e, vy_e, vz_e
+    global x_i, vx_i, vy_i, vz_i
 
     #TODO: Musnt' the ion and electron locations be the same?
     x_e.vals[:nseed] = L*rng.uniform(0,1, nseed)
-    vx_e.vals[:] = 0
-    vy_e.vals[:] = 0
-    vz_e.vals[:] = 0
+    #vx_e.vals[:] = 0
+    #vy_e.vals[:] = 0
+    #vz_e.vals[:] = 0
     x_i.vals[:nseed] = L*rng.uniform(0,1,nseed)
-    vx_i.vals[:] = 0
-    vy_i.vals[:] = 0
-    vz_i.vals[:] = 0
+    #vx_i.vals[:] = 0
+    #vy_i.vals[:] = 0
+    #vz_i.vals[:] = 0
     #for i in range(nseed):
     #    x_e.vals[i]  = L * rng.uniform(0,1)               # initial random position of the electron
     #    vx_e.vals[i] = 0
@@ -373,7 +376,6 @@ def init(nseed):
     N_e = nseed    # initial number of electrons
     N_i = nseed    # initial number of ions
     print("Initialised electrons and ions randomly")
-    print(x_e)
     return True
 
 #----------------------------------------------------------------------//
@@ -570,7 +572,7 @@ def solve_poisson(rho1, tt):
 
 
 def do_one_cycle(Time):
-    global N_e, N_i
+    global N_e, N_i, x_e, x_i
     DV       = ELECTRODE_AREA * DX
     FACTOR_W = WEIGHT / DV
     FACTOR_E = DT_E / E_MASS * E_CHARGE
@@ -593,6 +595,7 @@ def do_one_cycle(Time):
         # step 1: compute densities at grid points
         
 
+        #Computing the electron density 
         for k in range(N_e):
             c0 = x_e.vals[k] * INV_DX
             p  = int(c0)
@@ -629,7 +632,7 @@ def do_one_cycle(Time):
             p   = int(c0)
             c1  = p + 1.0 - c0
             c2  = c0 - p
-            e_x = c1 * efield.vals[p] + c2 * efield.vals[p+1];
+            e_x = c1 * efield.vals[p] + c2 * efield.vals[p+1]
             
             if (args.measurement_mode):
                 
@@ -669,7 +672,7 @@ def do_one_cycle(Time):
             for k in range(N_i):
                 c0  = x_i.vals[k] * INV_DX
                 p   = int(c0)
-                print(p)
+                print(k, p, x_i.vals)
                 c1  = p + 1 - c0
                 c2  = c0 - p
                 e_x = c1 * efield.vals[p] + c2 * efield.vals[p+1]
@@ -690,6 +693,7 @@ def do_one_cycle(Time):
                 
                 # update velocity and position and accumulate absorbed energy
                 
+                print(DT_I)
                 vx_i.vals[k] += e_x * FACTOR_I
                 x_i.vals[k]  += vx_i.vals[k] * DT_I
         
@@ -1149,6 +1153,9 @@ if __name__ == "__main__":
     no_of_cycles = 1
     cycle = 1                                        # init cycle
     init(N_INIT)                          # seed initial electrons & ions
+    #plt.plot(x_e.vals[:N_INIT])
+    #plt.plot(x_i.vals[:N_INIT])
+    #plt.show()
     print(">> eduPIC: running initializing cycle\n")
     Time = 0
     Time = do_one_cycle(Time)
