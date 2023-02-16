@@ -284,6 +284,7 @@ void init(int nseed){
     int i;
     
     for (i=0; i<nseed; i++){
+        //printf("Random values test: %f, %f\n", R01(MTgen), R01(MTgen));
         x_e[i]  = L * R01(MTgen);               // initial random position of the electron
         vx_e[i] = 0; vy_e[i] = 0; vz_e[i] = 0;  // initial velocity components of the electron
         x_i[i]  = L * R01(MTgen);               // initial random position of the ion
